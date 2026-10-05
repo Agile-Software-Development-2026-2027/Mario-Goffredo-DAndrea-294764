@@ -1,0 +1,16 @@
+A1. It dependes on what the command to add does. I might need to keep around an
+additional data structure. Other than that, the program would grow horizontally:
+I would just be adding another branching operation for that command.
+
+A2. I've already created a function dedidated to determining prices, it's called
+`price_of_card`. Without going deeper in the code, we can think of it as the only
+part of my program that decides how to calculated prices, based only on the
+number of taps. It can be changed independently of the rest of the program.
+
+A3. Having little experience in Python profiling I would print the time elapsed
+when executing certain regions of my program.
+
+A4. This would at least require changing every place when a string is printed.
+These places should instead access somme data structure that contains the
+strings organized by language, and in turn have a key for the particular string
+in the language.
