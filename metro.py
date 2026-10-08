@@ -1,25 +1,6 @@
 import sys
 from collections import Counter
 
-# Time horizon for the domain: today
-
-"""From: <https://prepinsta.com/data-structures-and-algorithms-in-python/weighted-and-directed-graphs/>"""
-
-STATIONS = [
-    "garibaldi",
-    "universita",
-    "municipio",
-    "toledo",
-    "dante",
-    "museo",
-    "materdei",
-    "vanvitelli",
-    "augusteo",
-    "fuga",
-    "mergellina",
-    "manzoni",
-]
-
 
 class WeightedUndirectedGraph[V, W]:
     def __init__(self, edges: (V, V, W)):
@@ -29,18 +10,30 @@ class WeightedUndirectedGraph[V, W]:
 
     def __getitem__(self, edge: (V, V)) -> W:
         u, v = edge
-        if u in self.graph:
-            for vertex, weight in self.graph[u]:
-                if vertex == v:
-                    return weight
-        if v in self.graph:
-            for vertex, weight in self.graph[v]:
-                if vertex == u:
-                    return weight
+        if (weight := self.__weight(u, v)) is not None:
+            return weight
+        if (weight := self.__weight(u, v)) is not None:
+            return weight
         raise IndexError(f"Graph doesn't have edge ({u}, {v})")
 
     def __setitem__(self, edge: (V, V), weight: W):
         u, v = edge
+        self.__set(u, v, weight)
+        self.__set(v, u, weight)
+
+    def __contains__(self, edge: (V, V)) -> bool:
+        """Check if the graph contains a edge. Also whether two vertices are adjacent."""
+        u, v = edge
+        return self.__in(u, v) or self.__in(v, u)
+
+    def __weight(self, u: V, v: V) -> W | None:
+        if u in self.graph:
+            for vertex, weight in self.graph[u]:
+                if vertex == v:
+                    return weight
+        return None
+
+    def __set(self, u: V, v: V, weight: W):
         if u in self.graph:
             for i in range(len(self.graph[u])):
                 if self.graph[u][i][0] == v:
@@ -49,25 +42,11 @@ class WeightedUndirectedGraph[V, W]:
         else:
             self.graph[u] = []
         self.graph[u].append((v, weight))
-        if v in self.graph:
-            for i in range(len(self.graph[v])):
-                if self.graph[v][i][0] == u:
-                    del self.graph[v][i]
-                    break
-        else:
-            self.graph[v] = []
-        self.graph[v].append((u, weight))
 
-    def __contains__(self, edge: (V, V)) -> bool:
-        """Check if the graph contains a node. Also whether two vertices are adjacent."""
-        u, v = edge
+    def __in(self, u: V, v: V) -> bool:
         if u in self.graph:
             for vertex, _ in self.graph[u]:
                 if vertex == v:
-                    return True
-        if v in self.graph:
-            for vertex, _ in self.graph[v]:
-                if vertex == u:
                     return True
         return False
 
@@ -88,104 +67,130 @@ network = WeightedUndirectedGraph(
     ]
 )
 
-# network.display()
-# print(("toledo", "dante") in network)
-# print(("dante", "toledo") in network)
+
+STATIONS = [
+    "garibaldi",
+    "universita",
+    "municipio",
+    "toledo",
+    "dante",
+    "museo",
+    "materdei",
+    "vanvitelli",
+    "augusteo",
+    "fuga",
+    "mergellina",
+    "manzoni",
+]
 
 
-# Check if I did not mistype
-# for a, b, is_open in NETWORK:
-#     assert a in STATIONS
-#     assert b in STATIONS
-#     assert is_open
+class Metro:
+    def __init__(self):
+        self.cards: set[str] = (
+            set()
+        )  # set of card currently tapped in but not yet tapped out
+        self.tap_outs: Counter[str] = Counter()  # card: number of tap outs
+        self.fares: Counter[str] = Counter()  # card: sum of prices paid at tap out
+        self.regulars: dict[
+            str, Counter[str]
+        ] = {}  # station: count of tap outs per station
 
+    @staticmethod
+    def price_of_card(number_of_taps: int) -> int:
+        match number_of_taps:
+            case 0:
+                raise ValueError("Number of taps can't be 0")
+            case 1 | 2 | 3:
+                return 2
+            case 4 | 5:
+                return 1
+            case _:
+                return 0
 
-def price_of_card(number_of_taps: int) -> int:
-    match number_of_taps:
-        case 0:
-            raise ValueError("Number of taps can't be 0")
-        case 1 | 2 | 3:
-            return 2
-        case 4 | 5:
-            return 1
-        case _:
-            return 0
+    def tap_in(self, card: str, station: str) -> str:
+        if card in self.cards:
+            return "ERROR already in"
+        if station not in STATIONS:
+            return "ERROR unknown station"
+        self.increment_tap(station, card)
+        self.cards.add(card)
+        return "OK"
 
+    def increment_tap(self, station: str, card: str):
+        """To count the regulars we count any tap IN and OUT at `station`"""
+        if station not in self.regulars:
+            self.regulars[station] = Counter()
+        self.regulars[station][card] += 1
 
-def increment_tap(regulars: dict[str, Counter[str]], station: str, card: str):
-    """To count the regulars we count any tap IN and OUT at `station`"""
-    if station not in regulars:
-        regulars[station] = Counter()
-    regulars[station][card] += 1
+    def tap_out(self, card: str, station: str) -> str | int:
+        if card not in self.cards:
+            return "ERROR not in"
+        if station not in STATIONS:
+            return "ERROR unknown station"
+        self.tap_outs[card] += 1
+        price = Metro.price_of_card(self.tap_outs[card])
+        self.fares[card] += price
+        self.increment_tap(station, card)
+        self.cards.remove(card)
+        return price
 
+    def pending(self) -> str:
+        return " ".join(sorted(self.cards)) or "none"
 
-def main():
-    cards: set[str] = set()  # set of card currently tapped in but not yet tapped out
-    tap_outs: Counter[str] = Counter()  # card: number of tap outs
-    fares: Counter[str] = Counter()  # card: sum of prices paid at tap out
-    regulars: dict[str, Counter[str]] = {}  # station: count of tap outs per station
+    def fare(self, card: str) -> int:
+        return self.fares[card]
 
-    for line in sys.stdin:
-        match line.split():
+    def tap_outs_at(self, station: str) -> str:
+        if station not in STATIONS:
+            return "ERROR unknown station"
+        if station not in self.regulars:
+            return "none"
+        sorted_counts = sorted(
+            self.regulars[station].items(), key=lambda t: (-t[1], t[0])
+        )
+        return " ".join(f"{k}:{v}" for k, v in sorted_counts)
+
+    def run_command(self, command: list) -> str | int | None:
+        match command.split():
             case []:
                 ...  # on empty line, do nothing
             case ["TAPIN", card, station]:
-                if card in cards:
-                    print("ERROR already in")
-                elif station not in STATIONS:
-                    print("ERROR unknown station")
-                else:
-                    increment_tap(regulars, station, card)
-                    cards.add(card)
-                    print("OK")
+                return self.tap_in(card, station)
             case ["TAPOUT", card, station]:
-                if card not in cards:
-                    print("ERROR not in")
-                elif station not in STATIONS:
-                    print("ERROR unknown station")
-                else:
-                    tap_outs[card] += 1
-                    price = price_of_card(tap_outs[card])
-                    fares[card] += price
-                    increment_tap(regulars, station, card)
-                    print(price)
-                    cards.remove(card)
+                return self.tap_out(card, station)
             case ["PENDING"]:
-                print(" ".join(sorted(cards)) or "none")
+                return self.pending()
             case ["FARE", card]:
-                print(fares[card])
+                return self.fare(card)
             case ["REGULARS", station]:
-                if station not in STATIONS:
-                    print("ERROR unknown station")
-                elif station not in regulars:
-                    print("none")
-                else:
-                    sorted_counts = sorted(
-                        regulars[station].items(), key=lambda t: (-t[1], t[0])
-                    )
-                    print(" ".join(f"{k}:{v}" for k, v in sorted_counts))
+                return self.tap_outs_at(station)
             case ["CLOSED", a, b]:
                 if (a, b) not in network:
-                    print("ERROR no track")
-                elif not network[a, b]:
-                    print("ERROR already closed")
-                else:
-                    network[a, b] = False
-                    print("OK")
+                    return "ERROR no track"
+                if not network[a, b]:
+                    return "ERROR already closed"
+                network[a, b] = False
+                return "OK"
             case ["OPEN", a, b]:
                 if (a, b) not in network:
-                    print("ERROR no track")
-                elif network[a, b]:
-                    print("ERROR not closed")
-                else:
-                    network[a, b] = True
-                    print("OK")
+                    return "ERROR no track"
+                if network[a, b]:
+                    return "ERROR not closed"
+                network[a, b] = True
+                return "OK"
             case ["REACHABLE", a, b]:
                 ...
             case ["ROUTE", a, b]:
                 ...
             case _:
-                print("ERROR invalid command")
+                return "ERROR invalid command"
+
+
+def main():
+    metro = Metro()
+    for line in sys.stdin:
+        if (result := metro.run_command(line)) or result == 0:
+            print(result)
 
 
 if __name__ == "__main__":
