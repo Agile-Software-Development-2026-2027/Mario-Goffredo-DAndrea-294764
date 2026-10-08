@@ -1,5 +1,6 @@
 import sys
 from collections import Counter, deque
+from typing import ClassVar
 
 # `WeightedUndirectedGraph` doesn't know anything about stations, fares, tap
 # ins, etc. It's just a graph, used by `Metro`, just like `Metro` uses `dict`
@@ -12,7 +13,7 @@ class WeightedUndirectedGraph[V, W]:
     data on its edges
 
     Ok, the implementation is a bit ugly with all the linear searches on
-    `__setitem__` and `__getitem__`, that's because I used an adjacency matrix,
+    `__setitem__` and `__getitem__`, that's because I used an adjacency list,
     but still I can do
 
     ```python
@@ -25,10 +26,13 @@ class WeightedUndirectedGraph[V, W]:
     """
 
     def __init__(self, edges: (V, V, W)):
-        # All hail the adjacency matrix
+        # All hail the adjacency list
         self.adj: dict[V, list[(V, W)]] = {}
+        self.vertices: set[V] = set()
         for u, v, weight in edges:
             self[u, v] = weight
+            self.vertices.add(u)
+            self.vertices.add(v)
 
     def __getitem__(self, edge: (V, V)) -> W:
         u, v = edge
@@ -82,7 +86,7 @@ class WeightedUndirectedGraph[V, W]:
         <https://stackoverflow.com/a/8922151>
         At least I know BFS is also able finds the shortest path.
         """
-        seen = {station: False for station in STATIONS}
+        seen = {station: False for station in self.vertices}
         seen[u] = True
         q = deque([[u]])
         while q:
@@ -95,23 +99,22 @@ class WeightedUndirectedGraph[V, W]:
                     q.append(list(path) + [adj])
 
 
-STATIONS = [
-    "garibaldi",
-    "universita",
-    "municipio",
-    "toledo",
-    "dante",
-    "museo",
-    "materdei",
-    "vanvitelli",
-    "augusteo",
-    "fuga",
-    "mergellina",
-    "manzoni",
-]
-
-
 class Metro:
+    STATIONS: ClassVar[list[str]] = [
+        "garibaldi",
+        "universita",
+        "municipio",
+        "toledo",
+        "dante",
+        "museo",
+        "materdei",
+        "vanvitelli",
+        "augusteo",
+        "fuga",
+        "mergellina",
+        "manzoni",
+    ]
+
     def __init__(self):
         # set of card currently tapped in but not yet tapped out
         self.cards: set[str] = set()
@@ -153,7 +156,7 @@ class Metro:
     def tap_in(self, card: str, station: str) -> str:
         if card in self.cards:
             return "ERROR already in"
-        if station not in STATIONS:
+        if station not in Metro.STATIONS:
             return "ERROR unknown station"
         self.increment_tap(station, card)
         self.cards.add(card)
@@ -168,7 +171,7 @@ class Metro:
     def tap_out(self, card: str, station: str) -> str | int:
         if card not in self.cards:
             return "ERROR not in"
-        if station not in STATIONS:
+        if station not in Metro.STATIONS:
             return "ERROR unknown station"
         self.tap_outs[card] += 1
         price = Metro.price_of_card(self.tap_outs[card])
@@ -184,7 +187,7 @@ class Metro:
         return self.fares[card]
 
     def tap_outs_at(self, station: str) -> str:
-        if station not in STATIONS:
+        if station not in Metro.STATIONS:
             return "ERROR unknown station"
         if station not in self.regulars:
             return "none"
@@ -210,14 +213,14 @@ class Metro:
         return "OK"
 
     def reachable(self, a: str, b: str) -> str:
-        if a not in STATIONS or b not in STATIONS:
+        if a not in Metro.STATIONS or b not in Metro.STATIONS:
             return "ERROR unknown station"
         if self.network.breadth_first_search(a, b, lambda open: open) is None:
             return "NO"
         return "YES"
 
     def route(self, a: str, b: str) -> str:
-        if a not in STATIONS or b not in STATIONS:
+        if a not in Metro.STATIONS or b not in Metro.STATIONS:
             return "ERROR unknown station"
         if (
             route := self.network.breadth_first_search(a, b, lambda open: open)
