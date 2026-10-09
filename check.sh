@@ -6,16 +6,14 @@
 
 set -eux
 
-ruff check *.py
-
-pylint *.py
-
-pytest
+uv run ruff check *.py
+uv run pylint *.py
+uv run pytest
 
 for t in test-cases/*.in; do
   id=$(basename "$t" .in)
   echo "$id"
-  python3 metro.py < "test-cases/$id.in" > "test-cases/$id.out"
-  python3 lint.py "test-cases/$id.out"
-  python3 check.py "test-cases/$id.in" "test-cases/$id.out" "solutions/$id.out"
+  uv run metro.py < "test-cases/$id.in" > "test-cases/$id.out"
+  uv run lint.py "test-cases/$id.out"
+  uv run check.py "test-cases/$id.in" "test-cases/$id.out" "solutions/$id.out"
 done

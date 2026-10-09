@@ -1,0 +1,19 @@
+[project]
+name = "programming-test"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mario D'Andrea", email = "goffredo2004@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "pylint>=4.1.2",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.10",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13.0"]
+build-backend = "uv_build"
