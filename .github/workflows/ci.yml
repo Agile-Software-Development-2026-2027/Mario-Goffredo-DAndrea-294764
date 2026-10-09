@@ -1,0 +1,26 @@
+name: Python continuous integration
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # From here: <https://github.com/astral-sh/setup-uv#python-version>
+      - name: Install the latest version of uv and set the python version
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          python-version: "3.14"
+
+      - name: Comprehensive check
+        run: ./check.sh
