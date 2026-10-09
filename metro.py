@@ -4,7 +4,7 @@ from typing import ClassVar
 
 # `WeightedUndirectedGraph` doesn't know anything about stations, fares, tap
 # ins, etc. It's just a graph, used by `Metro`, just like `Metro` uses `dict`
-# `Counter`, `set`, ...
+# `Counter`, and `set`.
 
 
 class WeightedUndirectedGraph[V, W]:
@@ -20,6 +20,9 @@ class WeightedUndirectedGraph[V, W]:
     graph[v, w] = "potato" # and then
     print(graph[v, w]) # will print "potato"
     ```
+
+    Performance should be fine with sparse graphs, because the adj list for
+    each vertex would be quite short. With dense graphs this would be terrible.
 
     It doesn't support adding and removing edges and vertices because I didn't
     need to.
@@ -43,12 +46,16 @@ class WeightedUndirectedGraph[V, W]:
         raise IndexError(f"Graph doesn't have edge ({u}, {v})")
 
     def __setitem__(self, edge: (V, V), weight: W):
+        """Adds or replaces the edge"""
         u, v = edge
         self.__set(u, v, weight)
         self.__set(v, u, weight)
 
     def __contains__(self, edge: (V, V)) -> bool:
-        """Check if the graph contains a edge. Also whether two vertices are adjacent."""
+        """
+        Check if the graph contains a edge. Also whether two vertices are
+        adjacent.
+        """
         u, v = edge
         return self.__in(u, v) or self.__in(v, u)
 
@@ -84,9 +91,9 @@ class WeightedUndirectedGraph[V, W]:
         Algorithms", Chapter 20: "Elementary Graph Algorithms". But after a
         couple of hours I wanted to cry so I _adapted_ this guys code:
         <https://stackoverflow.com/a/8922151>
-        At least I know BFS is also able finds the shortest path.
+        At least I know BFS is also able to find the shortest path.
         """
-        seen = {station: False for station in self.vertices}
+        seen = {v: False for v in self.vertices}
         seen[u] = True
         q = deque([[u]])
         while q:
@@ -125,6 +132,7 @@ class Metro:
         # station: count of tap outs per station
         self.regulars: dict[str, Counter[str]] = {}
 
+        # composition over inheritance
         self.network = WeightedUndirectedGraph(
             [
                 ("manzoni", "mergellina", True),
@@ -257,7 +265,7 @@ class Metro:
 def main():
     metro = Metro()
     for line in sys.stdin:
-        if (result := metro.run_command(line)) or result == 0:
+        if (result := metro.run_command(line)) is not None:
             print(result)
 
 
