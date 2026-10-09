@@ -1,5 +1,17 @@
 #!/bin/sh
 
+# Prefer the shell script to check instead of multiple steps in a Github
+# action, so that they can also be run locally and on pre-commit.
+# This was said during the lecture on CI/CD pipelines.
+
+set -eux
+
+ruff check *.py
+
+pylint *.py
+
+pytest
+
 for t in test-cases/*.in; do
   id=$(basename "$t" .in)
   echo "$id"
