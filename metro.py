@@ -1,10 +1,15 @@
+"""
+Metro solution.
+
+Note: `WeightedUndirectedGraph` doesn't know anything about stations, fares,
+tap ins, etc. It's just a graph, used by `Metro`, just like `Metro` uses
+`dict`, `Counter`, and `set`.
+"""
+
 import sys
 from collections import Counter, deque
+from collections.abc import Callable
 from typing import ClassVar
-
-# `WeightedUndirectedGraph` doesn't know anything about stations, fares, tap
-# ins, etc. It's just a graph, used by `Metro`, just like `Metro` uses `dict`
-# `Counter`, `set`, ...
 
 
 class WeightedUndirectedGraph[V, W]:
@@ -21,11 +26,14 @@ class WeightedUndirectedGraph[V, W]:
     print(graph[v, w]) # will print "potato"
     ```
 
+    Performance should be fine with sparse graphs, because the adj list for
+    each vertex would be quite short. With dense graphs this would be terrible.
+
     It doesn't support adding and removing edges and vertices because I didn't
     need to.
     """
 
-    def __init__(self, edges: (V, V, W)):
+    def __init__(self, edges: list[(V, V, W)]):
         # All hail the adjacency list
         self.adj: dict[V, list[(V, W)]] = {}
         self.vertices: set[V] = set()
@@ -43,14 +51,18 @@ class WeightedUndirectedGraph[V, W]:
         raise IndexError(f"Graph doesn't have edge ({u}, {v})")
 
     def __setitem__(self, edge: (V, V), weight: W):
+        """Adds or replaces the edge"""
         u, v = edge
         self.__set(u, v, weight)
-        self.__set(v, u, weight)
+        self.__set(v, u, weight)  # pylint: disable=arguments-out-of-order
 
     def __contains__(self, edge: (V, V)) -> bool:
-        """Check if the graph contains a edge. Also whether two vertices are adjacent."""
+        """
+        Check if the graph contains a edge. Also whether two vertices are
+        adjacent.
+        """
         u, v = edge
-        return self.__in(u, v) or self.__in(v, u)
+        return self.__in(u, v) or self.__in(v, u)  # pylint: disable=arguments-out-of-order
 
     def __weight(self, u: V, v: V) -> W | None:
         if u in self.adj:
@@ -77,16 +89,16 @@ class WeightedUndirectedGraph[V, W]:
         return False
 
     def breadth_first_search(
-        self, u: V, v: V, check_weight: callable[W, bool]
+        self, u: V, v: V, check_weight: Callable[W, bool]
     ) -> list[V] | None:
         """
         I started reading Cormen, Liserson, Rivest and Stein, "Introduction to
         Algorithms", Chapter 20: "Elementary Graph Algorithms". But after a
         couple of hours I wanted to cry so I _adapted_ this guys code:
         <https://stackoverflow.com/a/8922151>
-        At least I know BFS is also able finds the shortest path.
+        At least I know BFS is also able to find the shortest path.
         """
-        seen = {station: False for station in self.vertices}
+        seen = {v: False for v in self.vertices}
         seen[u] = True
         q = deque([[u]])
         while q:
@@ -94,12 +106,15 @@ class WeightedUndirectedGraph[V, W]:
             if path[-1] == v:
                 return path
             for adj, weight in self.adj.get(path[-1], []):
-                if not seen[adj] and check_weight(weight) == True:
+                if not seen[adj] and check_weight(weight) is True:
                     seen[adj] = True
                     q.append(list(path) + [adj])
+        return None
 
 
 class Metro:
+    """Metro made of stations, tracks and cards"""
+
     STATIONS: ClassVar[list[str]] = [
         "garibaldi",
         "universita",
@@ -125,6 +140,7 @@ class Metro:
         # station: count of tap outs per station
         self.regulars: dict[str, Counter[str]] = {}
 
+        # composition over inheritance
         self.network = WeightedUndirectedGraph(
             [
                 ("manzoni", "mergellina", True),
@@ -143,6 +159,7 @@ class Metro:
 
     @staticmethod
     def price_of_card(number_of_taps: int) -> int:
+        """Is responsible for deciding the price of a card based on today's taps"""
         match number_of_taps:
             case 0:
                 raise ValueError("Number of taps can't be 0")
@@ -154,6 +171,7 @@ class Metro:
                 return 0
 
     def tap_in(self, card: str, station: str) -> str:
+        """Taps in `card` at `station`"""
         if card in self.cards:
             return "ERROR already in"
         if station not in Metro.STATIONS:
@@ -169,6 +187,7 @@ class Metro:
         self.regulars[station][card] += 1
 
     def tap_out(self, card: str, station: str) -> str | int:
+        """Taps out `card` at `sation`. Returns the price to pay"""
         if card not in self.cards:
             return "ERROR not in"
         if station not in Metro.STATIONS:
@@ -181,12 +200,15 @@ class Metro:
         return price
 
     def pending(self) -> str:
+        """Lists cards that are currenctly tapped in"""
         return " ".join(sorted(self.cards)) or "none"
 
     def fare(self, card: str) -> int:
+        """Returns the cumulative price paid for `card`"""
         return self.fares[card]
 
     def tap_outs_at(self, station: str) -> str:
+        """Returns a record of cards and their tap out conts at `station`"""
         if station not in Metro.STATIONS:
             return "ERROR unknown station"
         if station not in self.regulars:
@@ -197,6 +219,7 @@ class Metro:
         return " ".join(f"{k}:{v}" for k, v in sorted_counts)
 
     def closed(self, a: str, b: str) -> str:
+        """Closes the track from `a` to `b`"""
         if (a, b) not in self.network:
             return "ERROR no track"
         if not self.network[a, b]:
@@ -205,6 +228,7 @@ class Metro:
         return "OK"
 
     def open(self, a: str, b: str) -> str:
+        """Reopens the track from `a` to `b`"""
         if (a, b) not in self.network:
             return "ERROR no track"
         if self.network[a, b]:
@@ -213,6 +237,7 @@ class Metro:
         return "OK"
 
     def reachable(self, a: str, b: str) -> str:
+        """Checks wether `a` and `b` are connected only by open tracks"""
         if a not in Metro.STATIONS or b not in Metro.STATIONS:
             return "ERROR unknown station"
         if self.network.breadth_first_search(a, b, lambda open: open) is None:
@@ -220,6 +245,7 @@ class Metro:
         return "YES"
 
     def route(self, a: str, b: str) -> str:
+        """Returns the route between `a` and `b`, or `"UNREACHABLE"`"""
         if a not in Metro.STATIONS or b not in Metro.STATIONS:
             return "ERROR unknown station"
         if (
@@ -228,7 +254,9 @@ class Metro:
             return "UNREACHABLE"
         return " ".join(route)
 
+    # pylint: disable=too-many-return-statements
     def run_command(self, command: list) -> str | int | None:
+        """Prases `command` and executes it accordingly"""
         match command.split():
             case []:
                 ...  # on empty line, do nothing
@@ -255,9 +283,10 @@ class Metro:
 
 
 def main():
+    """Entry point. Handles stdin and stdout."""
     metro = Metro()
     for line in sys.stdin:
-        if (result := metro.run_command(line)) or result == 0:
+        if (result := metro.run_command(line)) is not None:
             print(result)
 
 
