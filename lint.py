@@ -1,3 +1,7 @@
+"""Solution output format linter"""
+
+# pylint: disable=missing-function-docstring
+
 import re
 import sys
 from pathlib import Path

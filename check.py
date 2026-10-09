@@ -1,3 +1,7 @@
+"""Solution correctness checker"""
+
+# pylint: disable=missing-function-docstring
+
 import sys
 from itertools import zip_longest
 from pathlib import Path

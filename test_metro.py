@@ -1,8 +1,14 @@
+"""
+Metro unit tests.
+
+These are white-box, unit tests. `check.sh` does the black box testing.
+"""
+
 import pytest
 
 from metro import Metro
 
-# These are white-box, unit tests. `check.sh` does the black box testing.
+# pylint: disable=missing-function-docstring,redefined-outer-name
 
 
 @pytest.fixture
@@ -15,9 +21,9 @@ def test_brand_new_network_contains_only_known_stations_connected_by_open_tracks
 ):
     for u, v in metro.network.adj.items():
         assert u in Metro.STATIONS
-        for w, open in v:
+        for w, is_open in v:
             assert w in Metro.STATIONS
-            assert open
+            assert is_open
 
 
 def test_run_command_returns_none_when_command_is_the_empty_string(metro: Metro):
@@ -29,7 +35,7 @@ def test_run_command_returns_none_when_command_is_only_spaces(metro: Metro):
 
 
 def test_run_command_works_with_all_valid_commands(metro: Metro):
-    assert type(metro.run_command("FARE luciano")) is int
+    assert isinstance(metro.run_command("FARE luciano"), int)
     for cmd in (
         "TAPIN ciao hello",
         "TAPOUT hello ciao",
@@ -40,7 +46,7 @@ def test_run_command_works_with_all_valid_commands(metro: Metro):
         "REACHABLE lugro palermo",
         "ROUTE milano genova",
     ):
-        assert type(metro.run_command(cmd)) is str
+        assert isinstance(metro.run_command(cmd), str)
 
 
 def test_run_command_checks_number_of_parameters(metro: Metro):
@@ -170,9 +176,9 @@ def test_tap_outs_at_returns_the_sorted_list_of_most_used_cards_by_station(
 
 
 def test_closed_closes_a_track(metro: Metro):
-    assert metro.network["dante", "toledo"] == True
+    assert metro.network["dante", "toledo"] is True
     assert metro.closed("dante", "toledo") == "OK"
-    assert metro.network["dante", "toledo"] == False
+    assert metro.network["dante", "toledo"] is False
 
 
 def test_closed_detects_if_the_to_stations_are_not_adjacent(metro: Metro):
@@ -188,9 +194,9 @@ def test_closed_detects_if_a_track_is_already_closed(metro: Metro):
 
 def test_open_opens_a_track(metro: Metro):
     metro.closed("dante", "toledo")
-    assert metro.network["dante", "toledo"] == False
+    assert metro.network["dante", "toledo"] is False
     metro.open("dante", "toledo")
-    assert metro.network["dante", "toledo"] == True
+    assert metro.network["dante", "toledo"] is True
 
 
 def test_open_detects_if_the_to_stations_are_not_adjacent(metro: Metro):
@@ -275,4 +281,3 @@ def test_route_returns_the_shortest_path_between_two_station(metro: Metro):
         metro.route("garibaldi", "dante")
         == "garibaldi universita municipio toledo augusteo fuga vanvitelli materdei museo dante"
     )
-
