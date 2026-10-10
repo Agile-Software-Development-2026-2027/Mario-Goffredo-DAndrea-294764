@@ -265,13 +265,18 @@ def test_route_returns_unreachable_if_the_route_contains_closed_tracks(metro: Me
     assert metro.route("mergellina", "manzoni") == "UNREACHABLE"
 
 
-def test_route_returns_the_shortest_path_between_two_station(metro: Metro):
+def test_route_returns_start_when_start_and_destination_are_equal(metro: Metro):
     assert metro.route("fuga", "fuga") == "fuga"
+
+
+def test_route_returns_the_shortest_path_between_two_station(metro: Metro):
     assert metro.route("manzoni", "mergellina") == "manzoni mergellina"
     assert metro.route("mergellina", "manzoni") == "mergellina manzoni"
     assert metro.route("toledo", "fuga") == "toledo augusteo fuga"
     assert metro.route("fuga", "materdei") == "fuga vanvitelli materdei"
 
+
+def test_route_returns_different_shortest_path_after_a_track_closes(metro: Metro):
     assert (
         metro.route("garibaldi", "dante")
         == "garibaldi universita municipio toledo dante"
