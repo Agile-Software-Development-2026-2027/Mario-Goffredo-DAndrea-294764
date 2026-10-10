@@ -7,6 +7,7 @@
 set -eux
 
 uv run ruff check *.py
+uv run ty check
 uv run pylint *.py
 uv run pytest
 

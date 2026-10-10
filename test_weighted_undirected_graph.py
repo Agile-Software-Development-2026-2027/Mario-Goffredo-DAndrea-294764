@@ -50,9 +50,9 @@ def test_weights_can_be_set_and_retrieved_via_indexing_operation():
     assert graph[1, 2] == ["my weight", "another one"]
     assert graph[2, 1] == ["my weight", "another one"]
 
-    graph[2, 1] = 3.14
-    assert graph[1, 2] == 3.14
-    assert graph[2, 1] == 3.14
+    graph[2, 1] = []
+    assert graph[1, 2] == []
+    assert graph[2, 1] == []
 
 
 def test_edges_can_be_added_via_setitem():

@@ -33,16 +33,16 @@ class WeightedUndirectedGraph[V, W]:
     need to.
     """
 
-    def __init__(self, edges: list[(V, V, W)]):
+    def __init__(self, edges: list[tuple[V, V, W]]):
         # All hail the adjacency list
-        self.adj: dict[V, list[(V, W)]] = {}
+        self.adj: dict[V, list[tuple[V, W]]] = {}
         self.vertices: set[V] = set()
         for u, v, weight in edges:
             self[u, v] = weight
             self.vertices.add(u)
             self.vertices.add(v)
 
-    def __getitem__(self, edge: (V, V)) -> W:
+    def __getitem__(self, edge: tuple[V, V]) -> W:
         u, v = edge
         if (weight := self.__weight(u, v)) is not None:
             return weight
@@ -50,13 +50,13 @@ class WeightedUndirectedGraph[V, W]:
             return weight
         raise IndexError(f"Graph doesn't have edge ({u}, {v})")
 
-    def __setitem__(self, edge: (V, V), weight: W):
+    def __setitem__(self, edge: tuple[V, V], weight: W):
         """Adds or replaces the edge"""
         u, v = edge
         self.__set(u, v, weight)
         self.__set(v, u, weight)  # pylint: disable=arguments-out-of-order
 
-    def __contains__(self, edge: (V, V)) -> bool:
+    def __contains__(self, edge: tuple[V, V]) -> bool:
         """
         Check if the graph contains a edge. Also whether two vertices are
         adjacent.
@@ -89,7 +89,7 @@ class WeightedUndirectedGraph[V, W]:
         return False
 
     def breadth_first_search(
-        self, u: V, v: V, check_weight: Callable[W, bool]
+        self, u: V, v: V, check_weight: Callable[[W], bool]
     ) -> list[V] | None:
         """
         I started reading Cormen, Liserson, Rivest and Stein, "Introduction to
@@ -255,7 +255,7 @@ class Metro:
         return " ".join(route)
 
     # pylint: disable=too-many-return-statements
-    def run_command(self, command: list) -> str | int | None:
+    def run_command(self, command: str) -> str | int | None:
         """Prases `command` and executes it accordingly"""
         match command.split():
             case []:
