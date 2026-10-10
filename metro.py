@@ -29,8 +29,7 @@ class WeightedUndirectedGraph[V, W]:
     Performance should be fine with sparse graphs, because the adj list for
     each vertex would be quite short. With dense graphs this would be terrible.
 
-    It doesn't support adding and removing edges and vertices because I didn't
-    need to.
+    It doesn't support removing edges and vertices because I didn't need to.
     """
 
     def __init__(self, edges: list[tuple[V, V, W]]):
@@ -43,50 +42,31 @@ class WeightedUndirectedGraph[V, W]:
             self.vertices.add(v)
 
     def __getitem__(self, edge: tuple[V, V]) -> W:
-        u, v = edge
-        if (weight := self.__weight(u, v)) is not None:
-            return weight
-        if (weight := self.__weight(u, v)) is not None:
-            return weight
-        raise IndexError(f"Graph doesn't have edge ({u}, {v})")
+        for vertex, weight in self.adj.get(edge[0], []):
+            if vertex == edge[1]:
+                return weight
+        raise IndexError(f"Graph doesn't have edge {edge}")
 
     def __setitem__(self, edge: tuple[V, V], weight: W):
         """Adds or replaces the edge"""
-        u, v = edge
-        self.__set(u, v, weight)
-        self.__set(v, u, weight)  # pylint: disable=arguments-out-of-order
+        self.__set(edge[0], edge[1], weight)
+        self.__set(edge[1], edge[0], weight)  # pylint: disable=arguments-out-of-order
 
     def __contains__(self, edge: tuple[V, V]) -> bool:
         """
-        Check if the graph contains a edge. Also whether two vertices are
-        adjacent.
+        Wether the graph contains `edge`, or wether two vertices are adjacent.
         """
-        u, v = edge
-        return self.__in(u, v) or self.__in(v, u)  # pylint: disable=arguments-out-of-order
-
-    def __weight(self, u: V, v: V) -> W | None:
-        if u in self.adj:
-            for vertex, weight in self.adj[u]:
-                if vertex == v:
-                    return weight
-        return None
+        return any(v == edge[1] for v, _ in self.adj.get(edge[0], []))
 
     def __set(self, u: V, v: V, weight: W):
-        if u in self.adj:
-            for i in range(len(self.adj[u])):
-                if self.adj[u][i][0] == v:
-                    del self.adj[u][i]
-                    break
-        else:
-            self.adj[u] = []
+        if u not in self.adj:
+            self.adj[u] = [(v, weight)]
+            return
+        for i in range(len(self.adj[u])):
+            if self.adj[u][i][0] == v:
+                self.adj[u][i] = (v, weight)
+                return
         self.adj[u].append((v, weight))
-
-    def __in(self, u: V, v: V) -> bool:
-        if u in self.adj:
-            for vertex, _ in self.adj[u]:
-                if vertex == v:
-                    return True
-        return False
 
     def breadth_first_search(
         self, u: V, v: V, check_weight: Callable[[W], bool]
