@@ -53,9 +53,6 @@ class WeightedUndirectedGraph[V, W]:
         self.__set(edge[1], edge[0], weight)  # pylint: disable=arguments-out-of-order
 
     def __contains__(self, edge: tuple[V, V]) -> bool:
-        """
-        Wether the graph contains `edge`, or wether two vertices are adjacent.
-        """
         return any(v == edge[1] for v, _ in self.adj.get(edge[0], []))
 
     def __set(self, u: V, v: V, weight: W):
