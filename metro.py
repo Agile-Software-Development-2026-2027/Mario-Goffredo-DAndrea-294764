@@ -8,7 +8,7 @@ tap ins, etc. It's just a graph, used by `Metro`, just like `Metro` uses
 
 import sys
 from collections import Counter, deque
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import ClassVar
 
 
@@ -32,7 +32,7 @@ class WeightedUndirectedGraph[V, W]:
     It doesn't support removing edges and vertices because I didn't need to.
     """
 
-    def __init__(self, edges: list[tuple[V, V, W]]):
+    def __init__(self, edges: Iterable[tuple[V, V, W]]):
         # All hail the adjacency list
         self.adj: dict[V, list[tuple[V, W]]] = {}
         self.vertices: set[V] = set()
@@ -48,7 +48,6 @@ class WeightedUndirectedGraph[V, W]:
         raise IndexError(f"Graph doesn't have edge {edge}")
 
     def __setitem__(self, edge: tuple[V, V], weight: W):
-        """Adds or replaces the edge"""
         self.__set(edge[0], edge[1], weight)
         self.__set(edge[1], edge[0], weight)  # pylint: disable=arguments-out-of-order
 

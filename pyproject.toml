@@ -1,7 +1,7 @@
 [project]
 name = "programming-test"
 version = "0.1.0"
-description = "Add your description here"
+description = "ASD programming probe test, 2026-10-05"
 readme = "README.md"
 authors = [
     { name = "Mario D'Andrea", email = "goffredo2004@gmail.com" }

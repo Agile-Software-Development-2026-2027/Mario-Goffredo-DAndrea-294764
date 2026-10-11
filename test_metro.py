@@ -98,6 +98,11 @@ def test_tapin_detects_if_a_card_is_already_in(metro: Metro):
     assert metro.tap_in("luigi", "universita") == "ERROR already in"
 
 
+def test_price_of_card_raises_value_error_when_number_of_taps_is_zero():
+    with pytest.raises(ValueError) as err:
+        _ = Metro.price_of_card(0)
+    assert str(err.value) == "Number of taps can't be 0"
+
 def test_tapout_returns_the_price_of_the_trip(metro: Metro):
     for i in range(1, 144):
         metro.tap_in("gennaro", "fuga")
